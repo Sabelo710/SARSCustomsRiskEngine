@@ -37,6 +37,14 @@ namespace SARSCustomsRiskEngine.Nodes
             return _operator.Apply(leftValue, rightValue);
         }
 
+        /// <summary>
+        /// Decides whether parentheses are required around a child sub-expression.
+        /// Rules:
+        /// 1. Lower precedence → always wrap
+        /// 2. Higher precedence → never wrap
+        /// 3. Same precedence → wrap right operand of left-associative minus or divide
+        ///    to keep semantics, e.g. "a - (b - c)" vs "a - b - c".
+        /// </summary>
         private static bool ShouldAddParentheses(Operator child, Operator parent, bool isLeft)
         {
             if (child.Precedence < parent.Precedence) return true;
@@ -44,6 +52,7 @@ namespace SARSCustomsRiskEngine.Nodes
 
             if (child.Precedence == parent.Precedence)
             {
+                // Same precedence: only right-hand side can need parentheses
                 if (!isLeft && parent.IsLeftAssociative)
                     return parent.Symbol == '-' || parent.Symbol == '/';
             }

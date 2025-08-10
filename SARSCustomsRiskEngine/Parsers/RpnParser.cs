@@ -24,6 +24,10 @@ namespace SARSCustomsRiskEngine.Parsers
             return new RpnParseResult(root);
         }
 
+        /// <summary>
+        /// Splits the input string into operands or single-character operators.
+        /// Handles concatenated digits and ignores extra whitespace.
+        /// </summary>
         private static List<string> TokenizeExpression(string expression)
         {
             var tokens = new List<string>();
@@ -33,6 +37,7 @@ namespace SARSCustomsRiskEngine.Parsers
             {
                 if (char.IsWhiteSpace(c))
                 {
+                    // Flush any accumulated digits
                     if (!string.IsNullOrEmpty(current))
                     {
                         tokens.Add(current);
@@ -41,6 +46,7 @@ namespace SARSCustomsRiskEngine.Parsers
                 }
                 else if (ValidOperators.Contains(c))
                 {
+                    // Operator breaks a numeric token
                     if (!string.IsNullOrEmpty(current))
                     {
                         tokens.Add(current);
@@ -50,6 +56,7 @@ namespace SARSCustomsRiskEngine.Parsers
                 }
                 else
                 {
+                    // Build multi-digit or decimal numbers
                     current += c;
                 }
             }
@@ -60,6 +67,11 @@ namespace SARSCustomsRiskEngine.Parsers
             return tokens;
         }
 
+        /// <summary>
+        /// Uses a stack to transform token list into an expression tree.
+        /// Each operator pops two nodes (right then left) and pushes a new subtree.
+        /// Ensures exactly one root remains.
+        /// </summary>
         private static ExpressionNode BuildExpressionTree(IReadOnlyList<string> tokens)
         {
             var stack = new Stack<ExpressionNode>();
@@ -70,6 +82,7 @@ namespace SARSCustomsRiskEngine.Parsers
 
                 if (IsOperator(token))
                 {
+                    // RPN requires two operands before every operator
                     if (stack.Count < 2)
                         throw new RpnParseException($"Insufficient operands for operator '{token}' at position {i}");
 
@@ -89,6 +102,7 @@ namespace SARSCustomsRiskEngine.Parsers
                 }
             }
 
+            // Valid RPN must reduce to exactly one tree
             return stack.Count != 1
                 ? throw new RpnParseException($"Invalid expression: expected 1 result, got {stack.Count}")
                 : stack.Pop();

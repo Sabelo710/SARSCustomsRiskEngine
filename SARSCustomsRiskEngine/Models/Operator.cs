@@ -20,12 +20,17 @@
                 _ => throw new ArgumentException($"Unsupported operator: {op}", nameof(op))
             };
 
+        /// <summary>
+        /// Applies the operator to two operands.
+        /// Guards against divide-by-zero and unknown symbols.
+        /// </summary>
         public double Apply(double left, double right) =>
             Symbol switch
             {
                 '+' => left + right,
                 '-' => left - right,
                 '*' => left * right,
+                // Explicit check to give a domain-specific exception instead of Infinity/NaN
                 '/' => right != 0 ? left / right : throw new DivideByZeroException("Division by zero"),
                 _ => throw new InvalidOperationException($"Unknown operator: {Symbol}")
             };
